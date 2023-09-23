@@ -2,3 +2,5 @@
 *.o
 *.ppm
 .vscode
+*.mp4
+*.png
