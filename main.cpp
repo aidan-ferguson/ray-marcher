@@ -16,12 +16,12 @@
 const int PROGRESS_BAR_WIDTH = 100;
 
 // Rendering options
-const int WIDTH = 420;
-const int HEIGHT = 380;
+const int WIDTH = 1920;
+const int HEIGHT = 1080;
 const float H_FOV = 90.0f * (M_PI / 180);
 const float V_FOV = 2 * std::atan(std::tan(H_FOV/2.0f)*((float)HEIGHT/(float)WIDTH));
 const int N_SAMPLES = 8;
-const unsigned int MAX_THREADS = 40;
+const unsigned int MAX_THREADS = 15;
 const unsigned int N_FRAMES = 350; // 350 @ 20ms per frame -> full rotation
 const unsigned int MS_PER_FRAME = 20; // Number of (in-sim) milliseconds per frame
 const glm::vec3 light_pos(0, -10, 3);
@@ -182,7 +182,7 @@ int main() {
         pixels[idx] = new glm::vec3[WIDTH];
     }
 
-    for (int frame_idx = 0; frame_idx < N_FRAMES; frame_idx++)
+    for (int frame_idx = 80; frame_idx < N_FRAMES; frame_idx++)
     {
         print_progress(frame_idx);
 

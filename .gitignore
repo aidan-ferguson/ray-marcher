@@ -2,5 +2,7 @@
 *.o
 *.ppm
 .vscode
-*.mp4
 *.png
+*.mp4
+!1920x1080.mp4
+!1920x1080.png
