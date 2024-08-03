@@ -16,12 +16,12 @@
 const int PROGRESS_BAR_WIDTH = 100;
 
 // Rendering options
-const int WIDTH = 3072;
-const int HEIGHT = 1920;
+const int WIDTH = 200;
+const int HEIGHT = 200;
 const float H_FOV = 90.0f * (M_PI / 180);
 const float V_FOV = 2 * std::atan(std::tan(H_FOV/2.0f)*((float)HEIGHT/(float)WIDTH));
-const int N_SAMPLES = 16;
-const unsigned int MAX_THREADS = 15;
+const int N_SAMPLES = 1;
+const unsigned int MAX_THREADS = 20;
 const unsigned int N_FRAMES = 350; // 350 @ 20ms per frame -> full rotation
 const unsigned int MS_PER_FRAME = 20; // Number of (in-sim) milliseconds per frame
 const glm::vec3 light_pos(0, -10, 3);
@@ -42,33 +42,39 @@ const int MAX_RAY_STEPS = 100;
 const float STEP_EPSILON_THRESHOLD = 0.001f;
 
 // Get the minimum distance to the scene given a point in space
-float min_dist_to_scene(glm::vec3 pos) {
+float min_dist_to_scene(glm::vec3 pos, double time) {
     // Mandlebulb SDF from http://blog.hvidtfeldts.net/index.php/2011/09/distance-estimated-3d-fractals-v-the-mandelbulb-different-de-approximations/
-    glm::vec3 z = pos;
+    double w = std::sin(time/9.0);
+    glm::vec4 z = glm::vec4(pos, w); // Include the 4th dimension
     int Iterations = 10;
-    int Bailout = 100.0f;
+    float Bailout = 100.0f;
     float Power = 8.0f;
-	float dr = 1.0;
-	float r = 0.0;
-	for (int i = 0; i < Iterations ; i++) {
-		r = length(z);
-		if (r>Bailout) break;
-		
-		// convert to polar coordinates
-		float theta = acos(z.z/r);
-		float phi = glm::atan(z.y,z.x);
-		dr =  pow( r, Power-1.0)*Power*dr + 1.0;
-		
-		// scale and rotate the point
-		float zr = pow( r,Power);
-		theta = theta*Power;
-		phi = phi*Power;
-		
-		// convert back to cartesian coordinates
-		z = zr*glm::vec3(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta));
-		z+=pos;
-	}
-	return 0.5*log(r)*r/dr;
+    float dr = 1.0f;
+    float r = 0.0f;
+    for (int i = 0; i < Iterations; i++) {
+        r = length(z);
+        if (r > Bailout) break;
+
+        // convert to polar coordinates (4D)
+        float theta = acos(z.z / r);
+        float phi = atan(z.y / z.x);
+        float psi = atan(sqrt(z.x * z.x + z.y * z.y) / z.w);
+        dr = pow(r, Power - 1.0f) * Power * dr + 1.0f;
+
+        // scale and rotate the point
+        float zr = pow(r, Power);
+        theta = theta * Power;
+        phi = phi * Power;
+        psi = psi * Power;
+
+        // convert back to cartesian coordinates (4D)
+        z = zr * glm::vec4(sin(psi) * cos(theta) * cos(phi),
+                           sin(psi) * sin(phi) * cos(theta),
+                           cos(psi) * cos(theta),
+                           sin(psi) * sin(theta));
+        z += glm::vec4(pos, w); // Include the 4th dimension in the addition
+    }
+    return 0.5f * log(r) * r / dr;
 }
 
 // Take a normalised ray direction and return the number of steps the ray took into the scene
@@ -76,7 +82,7 @@ std::tuple<int, glm::vec3> march_ray(glm::vec3 ray_pos, glm::vec3 ray_dir, float
     int n_steps = 0;
     for(int step = 0; step < MAX_RAY_STEPS; step++) {
         // Step forward maximum allowed amount
-        float min_dist = min_dist_to_scene(ray_pos);
+        float min_dist = min_dist_to_scene(ray_pos, time);
         if(min_dist < STEP_EPSILON_THRESHOLD) 
             return {n_steps, ray_pos};
         ray_pos += ray_dir*min_dist;
@@ -108,7 +114,7 @@ glm::vec3 get_pixel(int x, int y, float time) {
 
         // Zoom in with time
         glm::vec3 ray_pos = CAM_POS;
-        ray_pos.z = ((std::cos(time)+1.0f)/2.0f) + 1.1f;
+        // ray_pos.z = ((std::cos(time)+1.0f)/2.0f) + 1.1f;
 
         // Rotate with time
         ray_pos = pos_rot_mat * ray_pos;
@@ -182,7 +188,7 @@ int main() {
         pixels[idx] = new glm::vec3[WIDTH];
     }
 
-    for (int frame_idx = 20; frame_idx < N_FRAMES; frame_idx++)
+    for (int frame_idx = 0; frame_idx < N_FRAMES; frame_idx++)
     {
         print_progress(frame_idx);
 
