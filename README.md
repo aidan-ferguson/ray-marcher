@@ -4,11 +4,14 @@ Simple C++ ray-marcher that outputs a .ppm files.
  - Has random super-sampling
  - Multi-threading (went from 2:16 -> 0:14 on my machine)
  - Shadows
- - Some animation support
+ - Camera animation support
+ - Animations of 4D SDFs by taking 3D slices 
 
 The following image is a 1920x1080 Mandlebulb generated with 8 samples per pixel:
 
-![1920x1080.png](1920x1080.png)
+![samples/1920x1080.png](samples/1920x1080.png)
+
+There are videos in the `samples` sub-directory along with some more images.
 
 ### CUDA
 
